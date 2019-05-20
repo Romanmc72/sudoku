@@ -136,7 +136,6 @@ class Matrix:
         for row_num, row in enumerate(self.values):
             for column_num, value in enumerate(row):
                 box_num = ((row_num // 3) * 2 + (column_num // 3))
-                print(f"row:{row_num}\tcol:{column_num}\tbox:{box_num}\tval:{value}")
                 this_cell = Cell(value=value,
                                  row=self.rows[row_num], 
                                  column=self.columns[column_num], 
@@ -206,15 +205,15 @@ class Matrix:
         print(box_break)
         for row in self.rows:
             print(f"""||\
-{f" {row.cells[0].value} |" if row.cells[0].value is not None else '   |'}\
-{f" {row.cells[1].value} |" if row.cells[1].value is not None else '   |'}\
-{f" {row.cells[2].value} ||" if row.cells[2].value is not None else '   ||'}\
-{f" {row.cells[3].value} |" if row.cells[3].value is not None else '   |'}\
-{f" {row.cells[4].value} |" if row.cells[4].value is not None else '   |'}\
-{f" {row.cells[5].value} ||" if row.cells[5].value is not None else '   ||'}\
-{f" {row.cells[6].value} |" if row.cells[6].value is not None else '   |'}\
-{f" {row.cells[7].value} |" if row.cells[7].value is not None else '   |'}\
-{f" {row.cells[8].value} ||" if row.cells[8].value is not None else '   ||'}""")
+ {f"{row.cells[0].value}" if row.cells[0].value is not None else ' '} |\
+ {f"{row.cells[1].value}" if row.cells[1].value is not None else ' '} |\
+ {f"{row.cells[2].value}" if row.cells[2].value is not None else ' '} ||\
+ {f"{row.cells[3].value}" if row.cells[3].value is not None else ' '} |\
+ {f"{row.cells[4].value}" if row.cells[4].value is not None else ' '} |\
+ {f"{row.cells[5].value}" if row.cells[5].value is not None else ' '} ||\
+ {f"{row.cells[6].value}" if row.cells[6].value is not None else ' '} |\
+ {f"{row.cells[7].value}" if row.cells[7].value is not None else ' '} |\
+ {f"{row.cells[8].value}" if row.cells[8].value is not None else ' '} ||""")
             if row.row_number in [2,5,8]:
                 print(box_break)
             else:
