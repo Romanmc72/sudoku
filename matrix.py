@@ -1,5 +1,6 @@
 import numpy as np
 
+
 empty_group = [None, None, None,
                None, None, None,
                None, None, None]
@@ -39,8 +40,8 @@ hard_sample_matrix = [[None, None, None, None, None, None, None, None, None],
                       [8   , 9   , None, 7   , 3   , None, None, None, None],
                       [6   , None, None, 4   , None, None, 2   , None, None],
                       [None, None, None, None, None, None, None, None, None]]
-
 complete_set = set([1, 2, 3, 4, 5, 6, 7, 8, 9])
+
 
 class Cell:
     def __init__(self,
@@ -229,4 +230,3 @@ class Matrix:
             return True
         else:
             return False
-        
