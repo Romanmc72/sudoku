@@ -90,13 +90,16 @@ class Cell(NumberSpace):
         self.box = box
         self.is_solved = True if value is not None else False
     
+    def __str__(self):
+        return 
+    
     def set_value(self, value):
         self.value = value
         self.possibilities = set([])
         self.is_solved = True
 
     
-class Row(CellGroup)):
+class Row(CellGroup):
     def __init__(self, row_number):
         CellGroup.__init__(self)
         self.row_number = row_number
@@ -108,7 +111,7 @@ class Column(CellGroup):
         self.column_number = column_number
 
 
-class Box(NumberSpace):
+class Box(CellGroup):
     def __init__(self, box_number):
         CellGroup.__init__(self)
         self.box_number = box_number
@@ -218,24 +221,22 @@ class Matrix:
         || 2 |   :
         ++---+ ...
         """
+        my_str = []
         row_break = "++---+---+---++---+---+---++---+---+---++"
         box_break = "++===+===+===++===+===+===++===+===+===++"
-        print(box_break)
+        my_str.append(box_break + '\n')
         for row in self.rows:
-            print(f"""||\
- {f"{row.cells[0].value}" if row.cells[0].value is not None else ' '} |\
- {f"{row.cells[1].value}" if row.cells[1].value is not None else ' '} |\
- {f"{row.cells[2].value}" if row.cells[2].value is not None else ' '} ||\
- {f"{row.cells[3].value}" if row.cells[3].value is not None else ' '} |\
- {f"{row.cells[4].value}" if row.cells[4].value is not None else ' '} |\
- {f"{row.cells[5].value}" if row.cells[5].value is not None else ' '} ||\
- {f"{row.cells[6].value}" if row.cells[6].value is not None else ' '} |\
- {f"{row.cells[7].value}" if row.cells[7].value is not None else ' '} |\
- {f"{row.cells[8].value}" if row.cells[8].value is not None else ' '} ||""")
-            if row.row_number in [2,5,8]:
-                print(box_break)
+            my_str.append('||')
+            for cell_number in range(len(row.cells)):
+                my_str.append(f""" {row.cells[cell_number].value if row.cells[cell_number].value is not None else ' '} |""")
+                if cell_number in [2, 5, 8]:
+                    my_str.append('|')
+            my_str.append('\n')
+            if row.row_number in [2, 5, 8]:
+                my_str.append(box_break + '\n')
             else:
-                print(row_break)
+                my_str.append(row_break + '\n')
+        return ''.join(my_str)
             
     def is_solved(self):
         if not self.numbers:
@@ -248,9 +249,11 @@ class Matrix:
 
     def update_possibilities(self, cell):
         # TODO update all possibilities
+        return None
 
     def fill_in_answers(self):
         # TODO fill in answers after possibilities have been updated
+        return None
 
     def solve(self):
         while not self.solved and not self.stuck:
