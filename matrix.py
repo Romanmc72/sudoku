@@ -1,66 +1,94 @@
 import numpy as np
 
 
-empty_group = [None, None, None,
+EMPTY_GROUP = [None, None, None,
                None, None, None,
                None, None, None]
-empty_matrix = [[None, None, None, None, None, None, None, None, None],
-                [None, None, None, None, None, None, None, None, None],
-                [None, None, None, None, None, None, None, None, None],
-                [None, None, None, None, None, None, None, None, None],
-                [None, None, None, None, None, None, None, None, None],
-                [None, None, None, None, None, None, None, None, None],
-                [None, None, None, None, None, None, None, None, None],
-                [None, None, None, None, None, None, None, None, None],
-                [None, None, None, None, None, None, None, None, None]]
-easy_sample_matrix = [[7   , None, None, None, None, None, None, None, 3   ],
-                      [None, 6   , 4   , None, None, None, 9   , 8   , None],
-                      [None, 9   , None, 7   , None, 3   , None, 1   , None],
-                      [None, None, 9   , 3   , None, 4   , 6   , None, None],
-                      [None, None, None, None, 9   , None, None, None, None],
-                      [None, None, 7   , 6   , None, 2   , 1   , None, None],
-                      [None, 8   , None, 4   , None, 7   , None, 3   , None],
-                      [None, 1   , 3   , None, None, None, 7   , 6   , None],
-                      [6   , None, None, None, None, None, None, None, 4   ]]
-medium_sample_matrix = [[None, 8   , None, 6   , None, 2   , None, 7   , None],
-                        [None, None, 2   , None, 1   , None, 3   , None, None],
-                        [None, None, None, 3   , None, 8   , None, None, None],
-                        [7   , None, 3   , None, 6   , None, 1   , None, 9   ],
-                        [None, None, None, None, None, None, None, None, None],
-                        [6   , None, 1   , None, 5   , None, 8   , None, 7   ],
-                        [None, None, None, 4   , None, 5   , None, None, None],
-                        [None, None, 6   , None, 3   , None, 7   , None, None],
-                        [None, 3   , None, 2   , None, 6   , None, 9   , None]]
-hard_sample_matrix = [[None, None, None, None, None, None, None, None, None],
-                      [None, None, 4   , None, None, 6   , None, None, 8   ],
-                      [None, None, None, None, 5   , 4   , None, 2   , 9   ],
-                      [4   , None, 5   , None, None, 9   , None, 6   , None],
-                      [None, None, 3   , None, None, None, 8   , None, None],
-                      [None, 2   , None, 8   , None, None, 9   , None, 3   ],
-                      [8   , 9   , None, 7   , 3   , None, None, None, None],
-                      [6   , None, None, 4   , None, None, 2   , None, None],
-                      [None, None, None, None, None, None, None, None, None]]
-complete_set = set([1, 2, 3, 4, 5, 6, 7, 8, 9])
+EMPTY_MATRIX = [
+    [None, None, None, None, None, None, None, None, None],
+    [None, None, None, None, None, None, None, None, None],
+    [None, None, None, None, None, None, None, None, None],
+    [None, None, None, None, None, None, None, None, None],
+    [None, None, None, None, None, None, None, None, None],
+    [None, None, None, None, None, None, None, None, None],
+    [None, None, None, None, None, None, None, None, None],
+    [None, None, None, None, None, None, None, None, None],
+    [None, None, None, None, None, None, None, None, None]]
+EASY_SAMPLE_MATRIX = [
+    [7   , None, None, None, None, None, None, None, 3   ],
+    [None, 6   , 4   , None, None, None, 9   , 8   , None],
+    [None, 9   , None, 7   , None, 3   , None, 1   , None],
+    [None, None, 9   , 3   , None, 4   , 6   , None, None],
+    [None, None, None, None, 9   , None, None, None, None],
+    [None, None, 7   , 6   , None, 2   , 1   , None, None],
+    [None, 8   , None, 4   , None, 7   , None, 3   , None],
+    [None, 1   , 3   , None, None, None, 7   , 6   , None],
+    [6   , None, None, None, None, None, None, None, 4   ]]
+MEDIUM_SAMPLE_MATRIX = [
+    [None, 8   , None, 6   , None, 2   , None, 7   , None],
+    [None, None, 2   , None, 1   , None, 3   , None, None],
+    [None, None, None, 3   , None, 8   , None, None, None],
+    [7   , None, 3   , None, 6   , None, 1   , None, 9   ],
+    [None, None, None, None, None, None, None, None, None],
+    [6   , None, 1   , None, 5   , None, 8   , None, 7   ],
+    [None, None, None, 4   , None, 5   , None, None, None],
+    [None, None, 6   , None, 3   , None, 7   , None, None],
+    [None, 3   , None, 2   , None, 6   , None, 9   , None]]
+HARD_SAMPLE_MATRIX = [
+    [None, None, None, None, None, None, None, None, None],
+    [None, None, 4   , None, None, 6   , None, None, 8   ],
+    [None, None, None, None, 5   , 4   , None, 2   , 9   ],
+    [4   , None, 5   , None, None, 9   , None, 6   , None],
+    [None, None, 3   , None, None, None, 8   , None, None],
+    [None, 2   , None, 8   , None, None, 9   , None, 3   ],
+    [8   , 9   , None, 7   , 3   , None, None, None, None],
+    [6   , None, None, 4   , None, None, 2   , None, None],
+    [None, None, None, None, None, None, None, None, None]]
+COMPLETE_SET = set([1, 2, 3, 4, 5, 6, 7, 8, 9])
 
 
-class Cell:
+class NumberSpace:
+    def __init__(self):
+        self.possibilities = COMPLETE_SET
+
+    def add_possibility(self, possibility):
+        self.possibilities.add(possibility)
+    
+    def rm_possibility(self, possibility):
+        self.possibilities.discard(possibility)
+
+
+class CellGroup(NumberSpace):
+    def __init__(self, size=9):
+        NumberSpace.__init__(self)
+        self.size = size
+        self.cells = []
+    
+    def add_cell(self, cell):
+        self.cells.append(cell)
+        if cell.value is not None:
+            self.rm_possibility(cell.value)
+
+    def refresh_possibilities(self):
+        for cell in self.cells:
+            self.rm_possibility(cell.value)
+
+    def get_values(self):
+        return set([cell.value for cell in self.cells if cell.value is not None])
+
+
+class Cell(NumberSpace):
     def __init__(self,
         value,
         row,
         column,
         box):
+        NumberSpace.__init__(self)
         self.value = value
         self.row = row
         self.column = column
         self.box = box
-        self.possibilities = set([])
         self.is_solved = True if value is not None else False
-    
-    def add_possibility(self, possibility):
-        self.possibilities.add(possibility)
-
-    def rm_possibility(self, possibilities):
-        self.possibilities.discard(possibility)
     
     def set_value(self, value):
         self.value = value
@@ -68,37 +96,25 @@ class Cell:
         self.is_solved = True
 
     
-class Row:
-    def __init__(self,
-        row_number):
+class Row(CellGroup)):
+    def __init__(self, row_number):
+        CellGroup.__init__(self)
         self.row_number = row_number
-        self.cells = []
-        self.possibilities = []
-
-    def add_cell(self, cell):
-        self.cells.append(cell)
 
 
-class Column:
-    def __init__(self,
-        column_number):
+class Column(CellGroup):
+    def __init__(self, column_number):
+        CellGroup.__init__(self)
         self.column_number = column_number
-        self.cells = []
-        self.possibilities = []
-
-    def add_cell(self, cell):
-        self.cells.append(cell)
 
 
-class Box:
-    def __init__(self,
-        box_number):
+class Box(NumberSpace):
+    def __init__(self, box_number):
+        CellGroup.__init__(self)
         self.box_number = box_number
-        self.cells = []
-        self.possibilities = []
+        self.rows = [Row(0), Row(1), Row(2)]
+        self.columns = [Column(0), Column(1), Column(2)]
 
-    def add_cell(self, cell):
-        self.cells.append(cell)
 
 class Matrix:
     """
@@ -164,6 +180,7 @@ class Matrix:
                 elif this_cell.value == 9:
                     self._9 += 1
         self.solved = False
+        self.stuck = False
     
     def get_row(self, row_number):
         return [cell.value for cell in self.cells if cell.row == row_number]
@@ -185,14 +202,14 @@ class Matrix:
     def get_missing(self, list_of_numbers):
         return [number for number in self.numbers if number not in list_of_numbers]
 
-    def print_out(self):
+    def __str__(self):
         """
         This method will print out the sudoku puzzle as 
         interpreted by the matrix class object. The printed 
         puzzle will go to the terminal and will be boxed like so:
 
         ++===+===+===++===+===+ ...
-        || 1 | 2 | 3 || 4 | 5 :   
+        || 1 | 2 | 3 || 4 |   :   
         ++---+---+---+---+ ...
         || 4 | 5 | 6 ||   :
         ++---+---+---++ ...
@@ -220,13 +237,21 @@ class Matrix:
             else:
                 print(row_break)
             
-    def solve(self):
-        while not self.solved:
-            break # TODO actually solve it
-
     def is_solved(self):
         if not self.numbers:
             self.solved = True
             return True
         else:
             return False
+
+    # def 
+
+    def update_possibilities(self, cell):
+        # TODO update all possibilities
+
+    def fill_in_answers(self):
+        # TODO fill in answers after possibilities have been updated
+
+    def solve(self):
+        while not self.solved and not self.stuck:
+            break # TODO actually solve it
