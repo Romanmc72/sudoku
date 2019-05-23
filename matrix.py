@@ -114,11 +114,27 @@ class Row(CellGroup):
         CellGroup.__init__(self)
         self.row_number = row_number
 
+    def __str__(self):
+        my_str = []
+        line_break = "+---+---+---+---+---+---+---+---+---+"
+        my_str.append(line_break + '\n|')
+        for cell in self.cells:
+            my_str.append(f""" {cell.value if cell.value is not None else ' '} |""")
+        my_str.append('\n' + line_break)
+        return ''.join(my_str)
+
 
 class Column(CellGroup):
     def __init__(self, column_number):
         CellGroup.__init__(self)
         self.column_number = column_number
+    def __str__(self):
+        my_str = []
+        line_break = "+---+\n"
+        my_str.append(line_break)
+        for cell in self.cells:
+            my_str.append(f"| {cell.value if cell.value is not None else ' '} |\n{line_break}")
+        return ''.join(my_str)
 
 
 class Box(CellGroup):
@@ -178,7 +194,6 @@ class Matrix:
         for row_num, row in enumerate(self.values):
             for column_num, value in enumerate(row):
                 box_num = ((row_num // 3) * 3 + (column_num // 3))
-                print(box_num)
                 this_cell = Cell(value=value,
                                  row=self.rows[row_num], 
                                  column=self.columns[column_num], 
