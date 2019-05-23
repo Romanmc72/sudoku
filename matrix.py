@@ -45,6 +45,7 @@ HARD_SAMPLE_MATRIX = [
     [6   , None, None, 4   , None, None, 2   , None, None],
     [None, None, None, None, None, None, None, None, None]]
 COMPLETE_SET = set([1, 2, 3, 4, 5, 6, 7, 8, 9])
+NULL_SET = set([])
 
 
 class NumberSpace:
@@ -59,9 +60,8 @@ class NumberSpace:
 
 
 class CellGroup(NumberSpace):
-    def __init__(self, size=9):
+    def __init__(self):
         NumberSpace.__init__(self)
-        self.size = size
         self.cells = []
     
     def add_cell(self, cell):
@@ -89,15 +89,25 @@ class Cell(NumberSpace):
         self.column = column
         self.box = box
         self.is_solved = True if value is not None else False
+        if self.value is not None:
+            self.row.rm_possibility(self.value)
+            self.column.rm_possibility(self.value)
+            self.box.rm_possibility(self.value)
+            self.possibilities = NULL_SET
     
     def __str__(self):
-        return 
+        return str(self.value)
+
+    def __dict__(self):
+        return {"row": self.row.row_number,
+                "column": self.column.column_number,
+                "box": self.box.box_number,
+                "value": self.value}
     
     def set_value(self, value):
         self.value = value
-        self.possibilities = set([])
+        self.possibilities = NULL_SET
         self.is_solved = True
-
     
 class Row(CellGroup):
     def __init__(self, row_number):
@@ -117,7 +127,28 @@ class Box(CellGroup):
         self.box_number = box_number
         self.rows = [Row(0), Row(1), Row(2)]
         self.columns = [Column(0), Column(1), Column(2)]
+    def __str__(self):
+        my_str = []
+        line_break = '+---+---+---+'
+        nl = '\n|'
+        my_str.append(line_break + nl)
+        for cell_number in range(len(self.cells)):
+            my_str.append(f""" {self.cells[cell_number].value if self.cells[cell_number].value is not None else ' '} |""")
+            if cell_number in [2, 5]:
+                my_str.append('\n' + line_break + nl)
+        my_str.append('\n' + line_break) 
+        return ''.join(my_str)
 
+    # @method
+    def rm_possibility(self, possibility):
+        self.possibilities.discard(possibility)
+        [row.rm_possibility(possibility) for row in self.rows]
+        [column.rm_possibility(possibility) for column in self.columns]
+
+class BoxLine(CellGroup):
+    def __init__(self, box, line):
+        self.box = box
+        self.line = line
 
 class Matrix:
     """
@@ -144,18 +175,10 @@ class Matrix:
         self.columns = [Column(0), Column(1), Column(2), Column(3), Column(4), Column(5), Column(6), Column(7), Column(8)]
         self.rows = [Row(0), Row(1), Row(2), Row(3), Row(4), Row(5), Row(6), Row(7), Row(8)]
         self.boxes = [Box(0), Box(1), Box(2), Box(3), Box(4), Box(5), Box(6), Box(7), Box(8)]
-        self._1 = 0
-        self._2 = 0
-        self._3 = 0
-        self._4 = 0
-        self._5 = 0
-        self._6 = 0
-        self._7 = 0
-        self._8 = 0
-        self._9 = 0
         for row_num, row in enumerate(self.values):
             for column_num, value in enumerate(row):
-                box_num = ((row_num // 3) * 2 + (column_num // 3))
+                box_num = ((row_num // 3) * 3 + (column_num // 3))
+                print(box_num)
                 this_cell = Cell(value=value,
                                  row=self.rows[row_num], 
                                  column=self.columns[column_num], 
@@ -164,46 +187,8 @@ class Matrix:
                 self.rows[row_num].add_cell(this_cell)
                 self.columns[column_num].add_cell(this_cell)
                 self.boxes[box_num].add_cell(this_cell)
-                if this_cell.value == 1:
-                    self._1 += 1
-                elif this_cell.value == 2:
-                    self._2 += 1
-                elif this_cell.value == 3:
-                    self._3 += 1
-                elif this_cell.value == 4:
-                    self._4 += 1
-                elif this_cell.value == 5:
-                    self._5 += 1
-                elif this_cell.value == 6:
-                    self._6 += 1
-                elif this_cell.value == 7:
-                    self._7 += 1
-                elif this_cell.value == 8:
-                    self._8 += 1
-                elif this_cell.value == 9:
-                    self._9 += 1
         self.solved = False
         self.stuck = False
-    
-    def get_row(self, row_number):
-        return [cell.value for cell in self.cells if cell.row == row_number]
-
-    def get_column(self, column_number):
-        return [cell.value for cell in self.cells if cell.column == column_number]
-    
-    def get_box(self, box_number):
-        return [cell.value for cell in self.cells if cell.box == box_number]
-
-    def check_number(self, number_to_check):
-        instances = len([cell.value for cell in self.cells if cell.value == number_to_check])
-        if instances == 9:
-            self.numbers.pop(self.numbers.index(number_to_check))
-            return 9
-        else:
-            return instances
-    
-    def get_missing(self, list_of_numbers):
-        return [number for number in self.numbers if number not in list_of_numbers]
 
     def __str__(self):
         """
@@ -237,7 +222,27 @@ class Matrix:
             else:
                 my_str.append(row_break + '\n')
         return ''.join(my_str)
-            
+
+    def get_row(self, row_number):
+        return [cell.value for cell in self.cells if cell.row == row_number]
+
+    def get_column(self, column_number):
+        return [cell.value for cell in self.cells if cell.column == column_number]
+
+    def get_box(self, box_number):
+        return [cell.value for cell in self.cells if cell.box == box_number]
+
+    def check_number(self, number_to_check):
+        instances = len([cell.value for cell in self.cells if cell.value == number_to_check])
+        if instances == 9:
+            self.numbers.pop(self.numbers.index(number_to_check))
+            return 9
+        else:
+            return instances
+    
+    def get_missing(self, list_of_numbers):
+        return [number for number in self.numbers if number not in list_of_numbers]
+
     def is_solved(self):
         if not self.numbers:
             self.solved = True
@@ -249,6 +254,9 @@ class Matrix:
 
     def update_possibilities(self, cell):
         # TODO update all possibilities
+        for cell in self.cells:
+            # do the thing
+            print(cell)
         return None
 
     def fill_in_answers(self):
