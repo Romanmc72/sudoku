@@ -3,6 +3,10 @@
 #           instance.set_value(possibility)
 # 
 # TODO use box slices to further remove possibilities from other CellGroups
+# TODO implement clearer controls around rows/columns/boxes and periphery elements
+#       essentially not relying on the order, but on the logic behind how sets 
+#       are organized within sudoku
+# TODO use the X-wing/Triple/Double/Quad techniques to ID and reduce possibilities
 #
 # if exists:
 # ++===+===+===++
@@ -343,6 +347,7 @@ class Matrix:
             self.stuck = True
 
     def solve(self):
+        self.stuck = False
         while not self.solved and not self.stuck:
             self.update_possibilities()
             self.fill_in_answers()
