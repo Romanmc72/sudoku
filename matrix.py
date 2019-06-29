@@ -31,8 +31,34 @@
 #
 # then 6 & 9 necessarily CANNOT exist in the third column of box 1 above
 # or box 3 below
+#
+# There also exists scenarios with doubles/triples/x-wing patterns that eliminate more possibilities
+#
+# X-wing:
+# ++===+===+===++
+# ||   |   |   ||
+# ++---+---+---++
+# ||2,6|   |2,6|| <- 2 & 6 are the possibilities here
+# ++---+---+---++
+# ||   |   |   ||
+# ++===+===+===++
+# ||   |   |   ||
+# ++---+---+---++
+# ||   |   |   || 
+# ++---+---+---++
+# ||   |   |   || 
+# ++===+===+===++
+# ||2,6|   |2,6|| <- and here
+# ++---+---+---++
+# ||   |   |   ||
+# ++---+---+---++
+# ||   |   |   ||
+# ++===+===+===++
+#
+# Therefore the values 2 and 6 cannot exist in any other cells in 
+# those columns (1 & 3), those rows (2 & 7), or those boxes (1 & 3)
+# 
 # import numpy as np
-
 COMPLETE_SET = set([1, 2, 3, 4, 5, 6, 7, 8, 9])
 NULL_SET = set([])
 
@@ -41,7 +67,7 @@ def list_of_zeroes(set_of_values):
     return [0 for value in set_of_values]
       
 
-class NumberSpace:
+class _NumberSpace:
     def __init__(self):
         self.possibilities = COMPLETE_SET.copy()
 
@@ -52,9 +78,71 @@ class NumberSpace:
         self.possibilities.discard(possibility)
 
 
-class CellGroup(NumberSpace):
-    def __init__(self):
-        NumberSpace.__init__(self)
+class Cell(_NumberSpace):
+    def __init__(self, value, row, column, box):
+        _NumberSpace.__init__(self)
+        self.value = value
+        self.row = row
+        self.column = column
+        self.box = box
+        self.is_solved = True if value is not None else False
+        if self.is_solved:
+            self.row.rm_possibility(self.value)
+            self.column.rm_possibility(self.value)
+            self.box.rm_possibility(self.value)
+            self.possibilities = NULL_SET.copy()
+    
+    def __str__(self):
+        return str(self.value)
+    
+    def __poss__(self):
+        if self.is_solved:
+            return f"""\
++-------+
+|       |
+|   {self.value}   |
+|       |
++-------+"""
+        else:
+            return f"""\
++-------+
+| {1 if 1 in self.possibilities else ' '} {2 if 2 in self.possibilities else ' '} {3 if 3 in self.possibilities else ' '} |
+| {4 if 4 in self.possibilities else ' '} {5 if 5 in self.possibilities else ' '} {6 if 6 in self.possibilities else ' '} |
+| {7 if 7 in self.possibilities else ' '} {8 if 8 in self.possibilities else ' '} {9 if 9 in self.possibilities else ' '} |
++-------+"""
+
+    def __dict__(self):
+        return {"row": self.row.row_number,
+                "column": self.column.column_number,
+                "box": self.box.box_number,
+                "value": self.value}
+    
+    def set_value(self, value):
+        self.value = value
+        self.possibilities = NULL_SET.copy()
+        self.is_solved = True
+    
+    def refresh_possibilities(self):
+        if not self.is_solved:
+            self.possibilities = self.row.possibilities.intersection(
+                self.column.possibilities.intersection(
+                    self.box.possibilities))
+            if len(self.possibilities) == 1:
+                self.set_value(self.possibilities.pop())
+        else:
+            self.possibilities = NULL_SET.copy()
+    
+    def cross_reference_neighbors(self):
+        pass
+        #for possibility in self.possibilities
+            
+
+
+class CellGroup(_NumberSpace):
+    def __init__(self, number, ndim=1):
+        _NumberSpace.__init__(self)
+        self.number = number
+        self.ndim = ndim
         self.cells = []
     
     def add_cell(self, cell):
@@ -85,49 +173,17 @@ class CellGroup(NumberSpace):
                     cell.set_value(value)
         return cells_solved
 
-
-
-class Cell(NumberSpace):
-    def __init__(self, value, row, column, box):
-        NumberSpace.__init__(self)
-        self.value = value
-        self.row = row
-        self.column = column
-        self.box = box
-        self.is_solved = True if value is not None else False
-        if self.is_solved:
-            self.row.rm_possibility(self.value)
-            self.column.rm_possibility(self.value)
-            self.box.rm_possibility(self.value)
-            self.possibilities = NULL_SET.copy()
-    
     def __str__(self):
-        return str(self.value)
-
+        return str(dict([(index, cell.value) for index, cell in enumerate(self.cells)]))
+    
     def __dict__(self):
-        return {"row": self.row.row_number,
-                "column": self.column.column_number,
-                "box": self.box.box_number,
-                "value": self.value}
-    
-    def set_value(self, value):
-        self.value = value
-        self.possibilities = NULL_SET.copy()
-        self.is_solved = True
-    
-    def refresh_possibilities(self):
-        if not self.is_solved:
-            self.possibilities = self.row.possibilities.intersection(
-                self.column.possibilities.intersection(
-                    self.box.possibilities))
-            if len(self.possibilities) == 1:
-                self.set_value(self.possibilities.pop())
-        else:
-            self.possibilities = NULL_SET.copy()
-    
+        return dict([(index, cell.value) for index, cell in enumerate(self.cells)])
+
+
+
 class Row(CellGroup):
     def __init__(self, row_number):
-        CellGroup.__init__(self)
+        CellGroup.__init__(self, number=row_number)
         self.row_number = row_number
 
     def __str__(self):
@@ -138,11 +194,34 @@ class Row(CellGroup):
             my_str.append(f""" {cell.value if cell.value is not None else ' '} |""")
         my_str.append('\n' + line_break)
         return ''.join(my_str)
+    
+    def __poss__(self):
+        my_str = []
+        line_break = ''.join(["+-------" for i in range(len(self.cells))] + ["+"] )
+        my_str.append(line_break + '\n|')
+        for iteration in range(3):
+            for cell in self.cells:
+                if cell.is_solved:
+                    if iteration != 1:
+                        my_str.append('       |')
+                    else:
+                        my_str.append(f'   {cell.value}   |')
+                else:
+                    for possibility in range((iteration * 3) + 1, ((iteration + 1) * 3) + 1):
+                        my_str.append(f' {possibility if possibility in cell.possibilities else " "}')
+                    my_str.append(' |')
+            if iteration != 2:
+                my_str.append('\n|')
+            else:
+                my_str.append('\n')
+        my_str.append(line_break)
+        return ''.join(my_str)
+
 
 
 class Column(CellGroup):
     def __init__(self, column_number):
-        CellGroup.__init__(self)
+        CellGroup.__init__(self, number=column_number)
         self.column_number = column_number
  
     def __str__(self):
@@ -156,7 +235,7 @@ class Column(CellGroup):
 
 class Box(CellGroup):
     def __init__(self, box_number):
-        CellGroup.__init__(self)
+        CellGroup.__init__(self, number=box_number, ndim=2)
         self.box_number = box_number
         self.rows = [Row(0), Row(1), Row(2)]
         self.columns = [Column(0), Column(1), Column(2)]
@@ -173,6 +252,28 @@ class Box(CellGroup):
                 my_str.append('\n' + line_break + nl)
         my_str.append('\n' + line_break) 
         return ''.join(my_str)
+    
+    def __poss__(self):
+        my_str = []
+        line_break = "+-------+-------+-------+"
+        nl = "\n|"
+        # TODO finish this WIP
+        for iteration in range(3):
+            for cell in self.cells:
+                if cell.is_solved:
+                    if iteration != 1:
+                        my_str.append('       |')
+                    else:
+                        my_str.append(f'   {cell.value}   |')
+                else:
+                    for possibility in range((iteration * 3) + 1, ((iteration + 1) * 3) + 1):
+                        my_str.append(f' {possibility if possibility in cell.possibilities else " "}')
+                    my_str.append(' |')
+            if iteration != 2:
+                my_str.append('\n|')
+            else:
+                my_str.append('\n')
+        my_str.append(line_break)
 
     def rm_possibility(self, possibility):
         self.possibilities.discard(possibility)
@@ -287,6 +388,7 @@ class Matrix:
             self.solved = True
             return True
         else:
+            self.solved = False
             return False
 
     def update_possibilities(self):
