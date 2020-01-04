@@ -1,3 +1,5 @@
+import matrix as m
+
 EMPTY_GROUP = [None, None, None,
                None, None, None,
                None, None, None]
@@ -41,3 +43,7 @@ HARD_SAMPLE_MATRIX = [
     [8   , 9   , None, 7   , 3   , None, None, None, None],
     [6   , None, None, 4   , None, None, 2   , None, None],
     [None, None, None, None, None, None, None, None, None]]
+
+EZ = m.Matrix(EASY_SAMPLE_MATRIX)
+MD = m.Matrix(MEDIUM_SAMPLE_MATRIX)
+HD = m.Matrix(HARD_SAMPLE_MATRIX)
