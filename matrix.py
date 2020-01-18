@@ -1,11 +1,6 @@
 #! /usr/bin/env python3
-# TODO count instances of each possibility within a CellGroup and where
-#       there exist only one instance of said possibility within that group, then: 
-#           instance.set_value(possibility)
-# 
-# TODO use box slices to further remove possibilities from other CellGroups
 # TODO implement clearer controls around rows/columns/boxes and periphery elements
-#       essentially not relying on the order, but on the logic behind how sets 
+#       essentially not relying on the order, but on the logic behind how sets
 #       are organized within sudoku
 # TODO use the X-wing/Triple/Double/Quad techniques to ID and reduce possibilities
 #
@@ -45,9 +40,9 @@
 # ++===+===+===++
 # ||   |   |   ||
 # ++---+---+---++
-# ||   |   |   || 
+# ||   |   |   ||
 # ++---+---+---++
-# ||   |   |   || 
+# ||   |   |   ||
 # ++===+===+===++
 # ||2,6|   |2,6|| <- and here
 # ++---+---+---++
@@ -56,10 +51,8 @@
 # ||   |   |   ||
 # ++===+===+===++
 #
-# Therefore the values 2 and 6 cannot exist in any other cells in 
+# Therefore the values 2 and 6 cannot exist in any other cells in
 # those columns (1 & 3), those rows (2 & 7), or those boxes (1 & 3)
-# 
-# import numpy as np
 VERBOSE = True
 COMPLETE_SET = set([1, 2, 3, 4, 5, 6, 7, 8, 9])
 NULL_SET = set([])
@@ -85,7 +78,12 @@ def list_of_zeroes(set_of_values: list) -> list:
     A list of zeros.
     """
     return [0 for value in set_of_values]
-      
+
+
+class DuplicationError(Exception):
+    """Raise this error if the process duplicates cell values within a row column or box"""
+    pass
+
 
 class _NumberSpace:
     """
@@ -99,7 +97,7 @@ class _NumberSpace:
 
     def add_possibility(self, possibility):
         self.possibilities.add(possibility)
-    
+
     def rm_possibility(self, possibility: int) -> int:
         """
         Description
@@ -148,10 +146,10 @@ class Cell(_NumberSpace):
             self.column.rm_possibility(self.value)
             self.box.rm_possibility(self.value)
             self.possibilities = NULL_SET.copy()
-    
+
     def __str__(self) -> str:
         return str(self.value)
-    
+
     def __poss__(self) -> str:
         """
         Description
@@ -183,7 +181,7 @@ class Cell(_NumberSpace):
             "value": self.value,
             "possibilities": self.possibilities
         }
-    
+
     def set_value(self, value):
         self.value = value
         self.possibilities = NULL_SET.copy()
@@ -194,7 +192,7 @@ class Cell(_NumberSpace):
             cell.rm_possibility(value)
         for cell in self.box.cells:
             cell.rm_possibility(value)
-    
+
     def refresh_possibilities(self):
         if not self.is_solved:
             self.possibilities = self.row.possibilities.intersection(
@@ -229,7 +227,7 @@ class CellGroup(_NumberSpace):
         self.number = number
         self.ndim = ndim
         self.cells = []
-    
+
     def add_cell(self, cell: Cell) -> None:
         """
         Description
@@ -241,7 +239,7 @@ class CellGroup(_NumberSpace):
         Params
         ------
         :cell: Cell
-        The Cell object to be added tot this group.
+        The Cell object to be added to this group.
 
         Return
         ------
@@ -294,13 +292,12 @@ class CellGroup(_NumberSpace):
 
     def __str__(self):
         return str(dict([(index, cell.value) for index, cell in enumerate(self.cells)]))
-    
+
     def __dict__(self):
         return dict([(index, cell.value) for index, cell in enumerate(self.cells)])
-    
+
     def __poss__(self):
         pass
-
 
 
 class Row(CellGroup):
@@ -317,16 +314,16 @@ class Row(CellGroup):
 
     def __str__(self):
         my_str = []
-        line_break = ''.join(["+---" for i in range(len(self.cells))] + ["+"] )
+        line_break = ''.join(["+---" for i in range(len(self.cells))] + ["+"])
         my_str.append(line_break + '\n|')
         for cell in self.cells:
             my_str.append(f""" {cell.value if cell.value is not None else ' '} |""")
         my_str.append('\n' + line_break)
         return ''.join(my_str)
-    
+
     def __poss__(self):
         my_str = []
-        line_break = ''.join(["+-------" for i in range(len(self.cells))] + ["+"] )
+        line_break = ''.join(["+-------" for i in range(len(self.cells))] + ["+"])
         my_str.append(line_break + '\n|')
         for iteration in range(3):
             for cell in self.cells:
@@ -347,7 +344,6 @@ class Row(CellGroup):
         return ''.join(my_str)
 
 
-
 class Column(CellGroup):
     """
     Description
@@ -359,7 +355,7 @@ class Column(CellGroup):
     def __init__(self, column_number):
         CellGroup.__init__(self, number=column_number)
         self.column_number = column_number
- 
+
     def __str__(self):
         my_str = []
         line_break = "+---+\n"
@@ -393,9 +389,9 @@ class Box(CellGroup):
             my_str.append(f" {self.cells[cell_number].value if self.cells[cell_number].value is not None else ' '} |")
             if cell_number in [2, 5]:
                 my_str.append('\n' + line_break + nl)
-        my_str.append('\n' + line_break) 
+        my_str.append('\n' + line_break)
         return ''.join(my_str)
-    
+
     def __poss__(self):
         """
         This method iterates over the cells in a box and prints those
@@ -411,12 +407,12 @@ class Box(CellGroup):
         +-------+
         in a matrix of 9 similar cells.
         """
-        
+
         my_str = []
         line_break = "+-------+-------+-------+"
         nl = "\n|"
         my_str.append(line_break + nl)
-        
+
         # Running through the 3 rows in a box
         for iteration in range(3):
 
@@ -427,12 +423,12 @@ class Box(CellGroup):
                 # the possibilities, fill the actual solved
                 # value in, inside of the middle
                 if cell.is_solved:
-                    
+
                     # iteration #1 is the center when iterating from [0, 3)
                     # which is where we want to print the solved value
                     # if it is a solved cell
                     if iteration != 1:
-                        
+
                         # So if it's not the center of a solved cell, print the blank line
                         my_str.append('       |')
 
@@ -452,14 +448,14 @@ class Box(CellGroup):
                     #
                     # sets the ranges at [1-4), [4-7), and [7-10)
                     for possibility in range((iteration * 3) + 1, ((iteration + 1) * 3) + 1):
-                        
+
                         # If this value is a possibility in the cell,
                         # add it to the string for this representation of the row
                         # otherwise leave as blank
                         my_str.append(f' {possibility if possibility in cell.possibilities else " "}')
                     my_str.append(' |')
             if iteration != 2:
-                
+
                 # If it's not the end, start the next row
                 my_str.append(nl)
             else:
@@ -488,7 +484,7 @@ class Box(CellGroup):
         self.possibilities.discard(possibility)
         [row.rm_possibility(possibility) for row in self.rows]
         [column.rm_possibility(possibility) for column in self.columns]
-    
+
     def add_cell(self, cell: Cell) -> None:
         """
         Description
@@ -505,7 +501,7 @@ class Box(CellGroup):
         :cell: Cell
         A cell object that contains either the number
         or the set of possibilities for that cell to contain.
-        
+
         Return
         ------
         None
@@ -516,7 +512,7 @@ class Box(CellGroup):
         row_num = cell_num // 3
         self.columns[col_num].add_cell(cell)
         self.rows[row_num].add_cell(cell)
-    
+
     def get_row(self, row_number: int) -> set:
         """
         Description
@@ -570,7 +566,7 @@ class Box(CellGroup):
         Return
         ------
         set
-        The set of possibilities        
+        The set of possibilities
         """
         possibilities = set()
         [possibilities.union(cell.possibilities) for cell in self.rows[row_number].cells if cell.possibilities]
@@ -591,7 +587,7 @@ class Box(CellGroup):
         Return
         ------
         set
-        The set of possibilities        
+        The set of possibilities
         """
         possibilities = set()
         [possibilities.union(cell.possibilities) for cell in self.columns[column_number].cells if cell.possibilities]
@@ -614,9 +610,9 @@ class Matrix:
      [None, None, None, None, None, None, None, None, None],
      [None, None, None, None, None, None, None, None, None],
      [None, None, None, None, None, None, None, None, None],
-     [None, None, None, None, None, None, None, None, None]]    
+     [None, None, None, None, None, None, None, None, None]]
     """
-    def __init__(self, values):
+    def __init__(self, values, verbose=VERBOSE):
         """
         Description
         -----------
@@ -624,6 +620,7 @@ class Matrix:
         Matrix. The only required argument is `values` wich is that list of lists described above.
         """
         self.values = values
+        self.verbose = verbose
         self.cells = []
         self.numbers = {1, 2, 3, 4, 5, 6, 7, 8, 9}
         self.columns = [Column(0), Column(1), Column(2), Column(3), Column(4), Column(5), Column(6), Column(7), Column(8)]
@@ -633,8 +630,8 @@ class Matrix:
             for column_num, value in enumerate(row):
                 box_num = ((row_num // 3) * 3 + (column_num // 3))
                 this_cell = Cell(value=value,
-                                 row=self.rows[row_num], 
-                                 column=self.columns[column_num], 
+                                 row=self.rows[row_num],
+                                 column=self.columns[column_num],
                                  box=self.boxes[box_num])
                 self.cells.append(this_cell)
                 self.rows[row_num].add_cell(this_cell)
@@ -646,12 +643,12 @@ class Matrix:
 
     def __str__(self) -> str:
         """
-        This method will print out the sudoku puzzle as 
-        interpreted by the matrix class object. The printed 
+        This method will print out the sudoku puzzle as
+        interpreted by the matrix class object. The printed
         puzzle will go to the terminal and will be boxed like so:
 
         ++===+===+===++===+===+ ...
-        || 1 | 2 | 3 || 4 |   :   
+        || 1 | 2 | 3 || 4 |   :
         ++---+---+---+---+ ...
         || 4 | 5 | 6 ||   :
         ++---+---+---++ ...
@@ -710,7 +707,7 @@ class Matrix:
         remain to be solved for in the matrix. As soon as there are
         9 instances of a number the number is considered solved and
         will no longer be check for when solving the remaining cells.
-        
+
         Params
         ------
         :number_to_check: int
@@ -734,7 +731,7 @@ class Matrix:
             return (number_to_check, 9)
         else:
             return (number_to_check, instances)
-    
+
     def update_remaining_numbers(self):
         copy_of_numbers = self.numbers.copy()
         for number in copy_of_numbers:
@@ -785,7 +782,6 @@ class Matrix:
             raise ValueError(f"You passed in: `{row_col}``, but we were expecting either `row` or `col`.")
         return possibilities_in_this_group.difference(possibilities_in_the_rest_of_the_group)
 
-    
     def slice_bad_possibilities(self, values_to_slice: set, box_number: int, group_number: int, row_col='row') -> None:
         """
         Description
@@ -814,17 +810,17 @@ class Matrix:
         """
         values_removed = 0
         for each_value in values_to_slice:
-            if row_col =='row':
-                group_to_slice = self.boxes[box_number].rows[group_number].cells[0].row 
+            if row_col == 'row':
+                group_to_slice = self.boxes[box_number].rows[group_number].cells[0].row
             elif row_col == 'col':
-                group_to_slice = self.boxes[box_number].columns[group_number].cells[0].column 
+                group_to_slice = self.boxes[box_number].columns[group_number].cells[0].column
             else:
                 raise ValueError(f"You passed in: `{row_col}``, but we were expecting either `row` or `col`.")
             for cell in group_to_slice.cells:
                 if cell.box.box_number != box_number:
                     values_removed += 1 if cell.rm_possibility(each_value) > 0 else 0
         return values_removed
-    
+
     def update_possibilities(self) -> None:
         """
         Description
@@ -841,7 +837,7 @@ class Matrix:
         Return
         ------
         None
-        """ 
+        """
         for cell in self.cells:
             cell.refresh_possibilities()
         while self.finds != 0:
@@ -888,7 +884,7 @@ class Matrix:
                     if cell.value in solved_values:
                         print(f"We have a duplicate in row:{row.row_number}; cell:{index}")
                         print(row)
-                        self.stuck = True
+                        raise DuplicationError("STOP! You have duplicates, see above!!!")
                     else:
                         solved_values.add(cell.value)
         for column in self.columns:
@@ -898,7 +894,7 @@ class Matrix:
                     if cell.value in solved_values:
                         print(f"We have a duplicate in column:{column.column_number}; cell:{index}")
                         print(column)
-                        self.stuck = True
+                        raise DuplicationError("STOP! You have duplicates, see above!!!")
                     else:
                         solved_values.add(cell.value)
         for box in self.boxes:
@@ -908,7 +904,7 @@ class Matrix:
                     if cell.value in solved_values:
                         print(f"We have a duplicate in box:{box.box_number}; cell:{index}")
                         print(box)
-                        self.stuck = True
+                        raise DuplicationError("STOP! You have duplicates, see above!!!")
                     else:
                         solved_values.add(cell.value)
 
@@ -938,21 +934,27 @@ class Matrix:
         """
         iteration = 0
         self.stuck = False
-        while not self.solved and not self.stuck:
-            print(f"Iteration: {iteration}")
-            print(f"Pre-Processing State:\n{self.__str__()}")
-            print(f"Pre-Processing Possibilities:\n{self.__poss__()}")
-            self.update_possibilities()
-            self.fill_in_answers()
-            self.update_remaining_numbers()
-            self.is_solved()
-            self.quality_check()
-            print(f"Post-Processing State:\n{self.__str__()}")
-            print(f"Post-Processing Possibilities:\n{self.__poss__()}")
-            iteration += 1
-        if self.solved:
-            print(f"Solved:\n{self.__str__()}")
-        elif self.stuck:
-            print(f"Stuck:\n{self.__str__()}")
-        else:
-            print(f"???:\n{self.__str__()}")
+        try:
+            while not self.solved and not self.stuck:
+                if self.verbose:
+                    print(f"Iteration: {iteration}")
+                    print(f"Pre-Processing State:\n{self.__str__()}")
+                    print(f"Pre-Processing Possibilities:\n{self.__poss__()}")
+                self.update_possibilities()
+                self.fill_in_answers()
+                self.update_remaining_numbers()
+                self.is_solved()
+                self.quality_check()
+                if self.verbose:
+                    print(f"Post-Processing State:\n{self.__str__()}")
+                    print(f"Post-Processing Possibilities:\n{self.__poss__()}")
+                iteration += 1
+            if self.verbose:
+                if self.solved:
+                    print(f"Solved:\n{self.__str__()}")
+                elif self.stuck:
+                    print(f"Stuck:\n{self.__str__()}")
+                else:
+                    print(f"???:\n{self.__str__()}")
+        except DuplicationError as e:
+            print(e)
