@@ -4,7 +4,7 @@ This file contains matricies of varying
 levels of difficulty and creates matrix
 objects from them for easy testing
 """
-import matrix as m
+from sudoku_objects.matrix import Matrix
 
 EMPTY_GROUP = [None, None, None,
                None, None, None,
@@ -54,6 +54,6 @@ HARD_SAMPLE_MATRIX = [
     [None, None, None, None, None, None, None, None, None]
 ]
 
-EZ = m.Matrix(EASY_SAMPLE_MATRIX)
-MD = m.Matrix(MEDIUM_SAMPLE_MATRIX)
-HD = m.Matrix(HARD_SAMPLE_MATRIX)
+EZ = Matrix(EASY_SAMPLE_MATRIX)
+MD = Matrix(MEDIUM_SAMPLE_MATRIX)
+HD = Matrix(HARD_SAMPLE_MATRIX)

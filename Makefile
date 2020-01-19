@@ -9,7 +9,7 @@ test:
 	
 	# cov requires pytest-cov library
 	py.test \
-	--cov=src \
+	--cov=sudoku_objects \
 	--cov-report term-missing \
 	--cov-config=.coveragerc \
 	--verbose
